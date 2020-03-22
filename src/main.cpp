@@ -22,6 +22,7 @@ void print_available_commands(){
     cout << "  - parameters LINK_1 LINK_2 ...\n";
     cout << "  - forward THETA_1 THETA_2 ...\n";
     cout << "  - intersection X Y R THETA_1 THETA_2 ...\n";
+    cout << "  - inverse_k X Y THETA\n";
     cout << "  - exit\n";
     cout << "--------------------------------\n";
 }
@@ -140,8 +141,27 @@ int main()
         }
 
         // Inverse kinematics
-        else if (commands[0] == "inverse_kinematics"){
-            // manipulator.inverse_kinematics();            
+        else if (commands[0] == "inverse_k"){
+            if (commands.size() == 4 && manipulator.get_config().num_links == 3){
+                double x = atof(commands[1].c_str());
+                double y = atof(commands[2].c_str());
+                double theta = atof(commands[3].c_str());
+                double angles_1[MAX_LINKS];
+                double angles_2[MAX_LINKS];
+                if (manipulator.inverse_kinematics(x, y, theta, angles_1, angles_2)){
+                    cout << "Configuration 1: " << angles_1[0] << ", " << angles_1[1] 
+                        << ", " << angles_1[2] << endl;
+                    cout << "Configuration 2: " << angles_2[0] << ", " << angles_2[1] 
+                        << ", " << angles_2[2] << endl;
+                }
+                else{
+                    cout << "Position unreachable.\n";
+                }
+                
+            }
+            else{
+                cout << "Invalid arguments or number of links.\n";
+            }        
         }
 
         // Inverse dynamics

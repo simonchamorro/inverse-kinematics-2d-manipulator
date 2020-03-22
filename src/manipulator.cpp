@@ -13,6 +13,30 @@ using namespace std;
 
 #define PI 3.14159265359
 
+// Utils
+
+// Keep angle between -180 and 180 degres
+double clip_angle_180(double angle){
+    while (angle > 180){
+        angle -= 360;
+    }
+    while (angle <= -180){
+        angle += 360;
+    }
+    return angle;
+}
+
+
+// Check if point is within center
+bool point_in_circle(double x_center, double y_center, double radius, 
+                    double x, double y){
+    double r_squared = pow(radius, 2);
+    double d_squared = pow(x - x_center, 2) + pow(y - y_center, 2);
+    return (d_squared <= r_squared);
+}
+
+
+// Robot Manipulator class functions
 
 // Constructor
 Manipulator::Manipulator(){
@@ -93,36 +117,82 @@ bool Manipulator::forward_kinematics(double angles[MAX_LINKS]){
  * @return is_within_circle bool.
  */
 bool Manipulator::intersection(double x, double y, double r, double angles[MAX_LINKS]){
-    bool is_within_circle;
     forward_kinematics(angles);
-    double r_squared = pow(r, 2);
-    double d_squared = pow(robot_config.x - x, 2) + pow(robot_config.y - y, 2);
-    is_within_circle = (d_squared <= r_squared);
-    return is_within_circle;
+    return point_in_circle(x, y, r, robot_config.x, robot_config.y);
 }
 
 
-bool Manipulator::inverse_kinematics(double x, double y, double theta){
-    cout << "Not implemented \n";
-    return false;
+/**
+ * Solve for angle of joint 1 form angle of joint 2.
+ *
+ * @param[in] theta2 Angle of joint 2.
+ * @return theta1 angle of joint 1.
+ */
+double Manipulator::solve_theta_1(double theta2, double x, double y){
+    double A = robot_config.links[0] + robot_config.links[1] * cos(theta2*PI/180);
+    double B = robot_config.links[1] * sin(theta2*PI/180);
+
+    // Find theta1 in radians
+    double theta_c1 = acos( (A*x + B*y) / (pow(A, 2) + pow(B, 2)) ) *180/PI;
+    double theta_c2 = -theta_c1;
+    double theta_s1 = asin( (A*y - B*x) / (pow(A, 2) + pow(B, 2)) ) *180/PI; 
+    double theta_s2 = clip_angle_180( 180 - theta_s1 );
+
+    double theta1;
+    if ( abs(theta_c1 - theta_s1) < 1e-6 || abs(theta_c1 - theta_s2) < 1e-6 ){
+        theta1 = theta_c1;
+    }
+    else{
+        theta1 = theta_c2;
+    }  
+    return theta1;
 }
 
 
-bool Manipulator::inverse_dynamics(double fx, double fy, double tau, double *torques[MAX_LINKS]){
-    cout << "Not implemented \n";
-    return false;
-}
-
-
-double Manipulator::clip_angle_180(double angle){
-    while (angle > 180){
-        angle -= 360;
+/**
+ * Inverse kinematics of Robot Manipulator.
+ *
+ * @param[in] x coordinate of end effector.
+ * @param[in] y coordinate of end effector.
+ * @param[in] y orientation of end effector.
+ * @param[out] angles_1 Angles of joints.
+ * @param[out] angles_1 Angles of joints, other possible configuration.
+ * @return bool: true if success, false if not.
+ */
+bool Manipulator::inverse_kinematics(double x, double y, double theta, 
+                                    double *angles_1, double *angles_2){
+    if (robot_config.num_links != 3){
+        return false;
+    }
+    // Find pos of J3 and check reachability
+    double x3 = x - robot_config.links[2]*cos(theta*PI/180.0);
+    double y3 = y - robot_config.links[2]*sin(theta*PI/180.0);
+    double radius = robot_config.links[0] + robot_config.links[1];
+    if (!point_in_circle(0.0, 0.0, radius, x3, y3)){
+        return false;
     }
 
-    while (angle <= -180){
-        angle += 360;
-    }
+    // Find configuration
+    // source: https://drive.google.com/file/d/1j-UEZHs-4KvykbWKMLxDwkFE_MvqaI3l/view
+    double d = 2*robot_config.links[0]*robot_config.links[1];
+    double f = pow(x3, 2) + pow(y3, 2) - pow(robot_config.links[0], 2) - pow(robot_config.links[1], 2);
+    double theta2_a = acos(f/d) * 180/PI;
+    double theta2_b = -theta2_a;
 
- 
-    return angle;
+    double theta1_a = solve_theta_1(theta2_a, x3, y3);
+    double theta1_b = solve_theta_1(theta2_b, x3, y3);
+
+    angles_1[0] = theta1_a;
+    angles_1[1] = theta2_a;
+    angles_1[2] = clip_angle_180( theta - theta1_a - theta2_a );
+    angles_2[0] = theta1_b;
+    angles_2[1] = theta2_b;
+    angles_2[2] = clip_angle_180( theta - theta1_b - theta2_b);
+    return true;
+}
+
+
+bool Manipulator::inverse_dynamics(double fx, double fy, double tau, double *torques){
+    cout << "Not implemented \n";
+    return false;
 }

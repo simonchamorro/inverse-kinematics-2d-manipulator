@@ -18,6 +18,7 @@ TEST_CASE( "Manipulator Robot Tests" ) {
     Manipulator manipulator;
     manipulator.reset();
     Configuration config = manipulator.get_config();
+    srand(0);
 
     SECTION( "Initialization" ) {
         REQUIRE( config.num_links == 3 );
@@ -83,6 +84,39 @@ TEST_CASE( "Manipulator Robot Tests" ) {
         angles[1] = 45.0;
         angles[2] = 0.0;
         REQUIRE( manipulator.intersection(x, y, r, angles) );
+    }
+
+    SECTION( "Inverse kinematics" ){
+        double x;
+        double y;
+        double theta;
+        double ang_1[3];
+        double ang_2[3];
+        double joints[3];
+
+        for (int i = 0; i < 10; i += 1){
+            joints[0] = (double)rand() * 360 / RAND_MAX - 180;
+            joints[1] = (double)rand() * 360 / RAND_MAX - 180;
+            joints[2] = (double)rand() * 360 / RAND_MAX - 180;
+            manipulator.forward_kinematics(joints);
+            Configuration config = manipulator.get_config();
+            REQUIRE( manipulator.inverse_kinematics(config.x, config.y, config.theta, ang_1, ang_2) );
+            bool valid_configuration = ( abs(joints[0] - ang_1[0]) < 1e-3 && 
+                            abs(joints[1] - ang_1[1]) < 1e-3 &&
+                            abs(joints[2] - ang_1[2]) < 1e-3 ||
+                            abs(joints[0] - ang_2[0]) < 1e-3 &&
+                            abs(joints[1] - ang_2[1]) < 1e-3 &&
+                            abs(joints[2] - ang_2[2]) < 1e-3);
+            REQUIRE( valid_configuration );
+        }
+        
+        // Test fail cases
+        x = 4;
+        y = 0;
+        theta = 0;
+        REQUIRE( !manipulator.inverse_kinematics(x, y, theta, ang_1, ang_2) );
+
+
     }
 
 }
