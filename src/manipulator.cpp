@@ -58,11 +58,11 @@ bool Manipulator::set_parameters(int num_links, double links[MAX_LINKS]){
 
 /**
  * Move each joint of the Robot Manipulator to a specific angle.
- * Angles are assumed to be between -180 and 180 degres. 
- * Array must contain at least num_links angles.
+ * Angles are assumed to be in degres.
  * Final x, y and theta position is stored internally
  *
  * @param[in] angles Array with desired joint angles. 
+ * @return true once done. 
  */
 bool Manipulator::forward_kinematics(double angles[MAX_LINKS]){
     double theta = 0;
@@ -82,9 +82,23 @@ bool Manipulator::forward_kinematics(double angles[MAX_LINKS]){
 }
 
 
+/**
+ * Checks if end effector is within a given circle.
+ * Array must contain at least num_links angles.
+ *
+ * @param[in] x coordinate of circle center.
+ * @param[in] y coordinate of circle center.
+ * @param[in] r radius of circle.
+ * @param[in] angles Array with desired joint angles. 
+ * @return is_within_circle bool.
+ */
 bool Manipulator::intersection(double x, double y, double r, double angles[MAX_LINKS]){
-    cout << "Not implemented \n";
-    return false;
+    bool is_within_circle;
+    forward_kinematics(angles);
+    double r_squared = pow(r, 2);
+    double d_squared = pow(robot_config.x - x, 2) + pow(robot_config.y - y, 2);
+    is_within_circle = (d_squared <= r_squared);
+    return is_within_circle;
 }
 
 

@@ -21,6 +21,7 @@ void print_available_commands(){
     cout << "  - reset\n";
     cout << "  - parameters LINK_1 LINK_2 ...\n";
     cout << "  - forward THETA_1 THETA_2 ...\n";
+    cout << "  - intersection X Y R THETA_1 THETA_2 ...\n";
     cout << "  - exit\n";
     cout << "--------------------------------\n";
 }
@@ -39,13 +40,20 @@ void print_robot_config(Configuration config){
 
 int main()
 {
+    //Init Manipulator
     bool exit_flag = false;
     Manipulator manipulator;
     manipulator.reset();
     print_robot_config(manipulator.get_config());
     print_available_commands();
 
-    while (!exit_flag){      
+    // Set print settings
+    cout.precision(3);
+    cout << fixed << boolalpha;
+
+    while (!exit_flag){
+
+        // Get user input
         string input;
         getline(std::cin, input);
         string buffer;
@@ -95,6 +103,9 @@ int main()
                     angles[i] = atof(commands[i + 1].c_str());
                 }
                 manipulator.forward_kinematics(angles);
+                config = manipulator.get_config();
+                cout << "End effector position x: " << config.x << ", y: " 
+                        << config.y << ", theta: " << config.theta << endl; 
             }
 
             else{
@@ -104,7 +115,28 @@ int main()
 
         // Intersection
         else if (commands[0] == "intersection"){
-            // manipulator.intersection();     
+            Configuration config = manipulator.get_config();
+            int n_links = config.num_links;
+            if (commands.size() == n_links + 4){
+                double angles[n_links];
+                double x = atof(commands[1].c_str());
+                double y = atof(commands[2].c_str());
+                double r = atof(commands[3].c_str());
+                for (int i = 4; i < commands.size(); i += 1){
+                    angles[i] = atof(commands[i].c_str());
+                }
+                bool is_in_circle = manipulator.intersection(x, y, r, angles);
+                config = manipulator.get_config();
+                cout << "Circle x: " << x << ", y: " << y 
+                    << ", r: " << r << endl;
+                cout << "End effector position x: " << config.x << ", y: " 
+                    << config.y << ", theta: " << config.theta << endl;
+                cout << "Is within circle: " << is_in_circle << endl;
+            }
+
+            else{
+                cout << "Invalid number of arguments.\n";
+            }      
         }
 
         // Inverse kinematics
@@ -125,6 +157,7 @@ int main()
         else{
             cout << "\nNot a valid command\n";
         }
+        cout << endl; 
     }
         
     return 0;

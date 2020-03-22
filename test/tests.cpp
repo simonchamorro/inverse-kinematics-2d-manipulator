@@ -54,4 +54,35 @@ TEST_CASE( "Manipulator Robot Tests" ) {
         REQUIRE( abs(config.theta - 45.0) < 1e-6 );
     }
 
+    SECTION( "Intersection" ) {
+        double x;
+        double y;
+        double r;
+        double angles[MAX_LINKS];
+
+        x = 3.0;
+        y = 0.0;
+        r = 0.1;
+        angles[0] = 0.0;
+        angles[1] = 0.0;
+        angles[2] = 0.0;
+        REQUIRE( manipulator.intersection(x, y, r, angles) );
+
+        x = 1.0;
+        y = 1.0;
+        r = 0.3;
+        angles[0] = 30.0;
+        angles[1] = 30.0;
+        angles[2] = 30.0;
+        REQUIRE( !manipulator.intersection(x, y, r, angles) );
+
+        x = -2.4;
+        y = -1.4;
+        r = 0.2;
+        angles[0] = 180.0;
+        angles[1] = 45.0;
+        angles[2] = 0.0;
+        REQUIRE( manipulator.intersection(x, y, r, angles) );
+    }
+
 }
