@@ -61,7 +61,7 @@ Resets the robot to the default state.
 Changes the robot links. The desired lengths for the links are given as parameters. There have to be between 1 and 10 links.  
 
 #### forward
-Changes the robot configuration using its forward dynamics. The joint positions are given as parameters and the end effector's position (x, y, theta) is computed.
+Changes the robot configuration using its forward kinematics. The joint positions are given as parameters and the end effector's position (x, y, theta) is computed.
 
 #### intersection
 Given a circle (x, y center and radius) and joint positions, the functions checks if the end effector is within that circle. The circle parameters and the joint angles are given as parameters.
