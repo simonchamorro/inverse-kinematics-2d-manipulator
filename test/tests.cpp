@@ -151,4 +151,60 @@ TEST_CASE( "Manipulator Robot Tests" ) {
         REQUIRE( abs(torques[2] - 1.366) < 1e-3 );
     }
 
+    SECTION( "Changing Robot Configuration" ){
+        double x_circle, y_circle, r, n_links;
+
+        double links[MAX_LINKS];
+        double angles[MAX_LINKS];
+
+        // Change links
+        n_links = 4;
+        links[0] = 3.0;
+        links[1] = 2.0;
+        links[2] = 1.0;
+        links[3] = 1.0;
+        manipulator.set_parameters(n_links, links);
+        config = manipulator.get_config();
+        REQUIRE( config.num_links == n_links );
+        REQUIRE( config.links[0] == links[0] );
+        REQUIRE( config.links[1] == links[1] );
+        REQUIRE( config.links[2] == links[2] );
+        REQUIRE( config.links[2] == links[3] );
+
+        // Forward
+        angles[0] = 0.0;
+        angles[1] = 90.0;
+        angles[2] = -90.0;
+        angles[3] = -90.0;
+        manipulator.forward_kinematics(angles);
+        config = manipulator.get_config();
+        REQUIRE( abs(config.x - 4.0) < 1e-6 );
+        REQUIRE( abs(config.y - 1.0) < 1e-6 );
+        REQUIRE( abs(config.theta - (-90.0)) < 1e-6 );
+
+        // Intersection
+        x_circle = 4.1;
+        y_circle = 1.1;
+        r = 0.2;
+        REQUIRE( manipulator.intersection(x_circle, y_circle, r, angles) );
+
+        x_circle = 4.1;
+        y_circle = 1.1;
+        r = 0.05;
+        REQUIRE( !manipulator.intersection(x_circle, y_circle, r, angles) );
+
+        // Inverse kinematics and dynamics fail
+        double x = 0;
+        double y = 0;
+        double theta = 0;
+        double ang_1[4];
+        double ang_2[4];
+        REQUIRE( !manipulator.inverse_kinematics(x, y, theta, ang_1, ang_2) );
+
+        double fx = 0;
+        double fy = 0;
+        double tau = 0;
+        double torques[4];
+        REQUIRE( !manipulator.inverse_dynamics(fx, fy, tau, torques) );
+    }
 }

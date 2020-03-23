@@ -126,15 +126,15 @@ int main()
             Configuration config = manipulator.get_config();
             int n_links = config.num_links;
             if (commands.size() == n_links + 4){
-                double angles[n_links];
+                double angles[MAX_LINKS];
                 double x = atof(commands[1].c_str());
                 double y = atof(commands[2].c_str());
                 double r = atof(commands[3].c_str());
                 for (int i = 4; i < commands.size(); i += 1){
-                    angles[i] = atof(commands[i].c_str());
+                    angles[i - 4] = atof(commands[i].c_str());
                 }
                 bool is_in_circle = manipulator.intersection(x, y, r, angles);
-                config = manipulator.get_config();
+                config = manipulator.get_config();            
                 cout << "Circle x: " << x << ", y: " << y 
                     << ", r: " << r << endl;
                 cout << "End effector position x: " << config.x << ", y: " 
@@ -173,12 +173,15 @@ int main()
 
         // Inverse dynamics
         else if (commands[0] == "inverse_d"){
-            if (commands.size() == 4 && manipulator.get_config().num_links == 3){
+            Configuration config = manipulator.get_config();
+            if (commands.size() == 4 && config.num_links == 3){
                 double fx = atof(commands[1].c_str());
                 double fy = atof(commands[2].c_str());
                 double tau = atof(commands[3].c_str());
                 double torques[MAX_LINKS];
                 if (manipulator.inverse_dynamics(fx, fy, tau, torques)){
+                    cout << "Current Configuration: " << config.angles[0] << ", " << config.angles[1] 
+                        << ", " << config.angles[2] << endl;
                     cout << "Torques: " << torques[0] << ", " << torques[1] 
                         << ", " << torques[2] << endl;
                 }
