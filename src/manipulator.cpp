@@ -75,6 +75,7 @@ bool Manipulator::set_parameters(int num_links, double links[MAX_LINKS]){
     robot_config.num_links = num_links;
     for (int i = 0; i < num_links; i+=1 ){
         robot_config.links[i] = links[i];
+        robot_config.angles[i] = 0.0;
     }
     return true;
 }
@@ -192,7 +193,50 @@ bool Manipulator::inverse_kinematics(double x, double y, double theta,
 }
 
 
+/**
+ * Inverse dynamics of Robot Manipulator.
+ *
+ * @param[in] fx desired force at end effector.
+ * @param[in] fy desired force at end effector.
+ * @param[in] tau desired torque at end effector.
+ * @param[out] torques at robot joints.
+ * @return bool: true if success, false otherwise.
+ */
 bool Manipulator::inverse_dynamics(double fx, double fy, double tau, double *torques){
-    cout << "Not implemented \n";
-    return false;
+    if (robot_config.num_links != 3){
+        return false;
+    }
+
+    // source: http://robotics.sjtu.edu.cn/upload/course/5/files/Jacobian.pdf
+    double l1 = robot_config.links[0];
+    double l2 = robot_config.links[1];
+    double l3 = robot_config.links[2];
+    double a1 = robot_config.angles[0]*PI/180;
+    double a2 = robot_config.angles[1]*PI/180;
+    double a3 = robot_config.angles[2]*PI/180;
+
+    double jacobian[3][3] = {{-l1*sin(a1) -l2*sin(a1 + a2) -l3*sin(a1 + a2 + a3), -l2*sin(a1 + a2) -l3*sin(a1 + a2 + a3), -l3*sin(a1 + a2 + a3)}, 
+                             {l1*cos(a1) + l2*cos(a1 + a2) + l3*cos(a1 + a2 + a3), l2*cos(a1 + a2) + l3*cos(a1 + a2 + a3), l3*cos(a1 + a2 + a3)}, 
+                             {1, 1, 1}};
+
+    double jacobian_t[3][3];
+    for(int i = 0; i < 3; i += 1)
+      for(int j = 0; j < 3; j += 1) {
+         jacobian_t[j][i] = jacobian[i][j];
+      }
+
+    int i, j, k;
+    double mult[3][1];
+    double forces[3][1] = {{fx}, {fy}, {tau}};
+    for(i = 0; i < 3; ++i)
+        for(j = 0; j < 1; ++j)
+            for(k = 0; k < 3; ++k)
+            {
+                mult[i][j] += jacobian_t[i][k] * forces[k][j];
+            }
+
+    torques[0] = mult[0][0];
+    torques[1] = mult[1][0];
+    torques[2] = mult[2][0];
+    return true;
 }

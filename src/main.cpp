@@ -1,7 +1,7 @@
 /********
  * main.cpp
  * Author: Simon Chamorro
- * Main file to test Robot Manipulator class
+ * Main file to test Robot Manipulator class interactively
 ********/
 
 #include <iostream>
@@ -19,10 +19,11 @@ void print_available_commands(){
     cout << "Available Commands:\n";
     cout << "  - help\n";
     cout << "  - reset\n";
-    cout << "  - parameters LINK_1 LINK_2 ...\n";
+    cout << "  - links LINK_1 LINK_2 ...\n";
     cout << "  - forward THETA_1 THETA_2 ...\n";
     cout << "  - intersection X Y R THETA_1 THETA_2 ...\n";
     cout << "  - inverse_k X Y THETA\n";
+    cout << "  - inverse_d FX FY TAU\n";
     cout << "  - exit\n";
     cout << "--------------------------------\n";
 }
@@ -34,6 +35,11 @@ void print_robot_config(Configuration config){
     cout << "  - Links: ";
     for (int i = 0; i < config.num_links; i += 1){
         cout << config.links[i] << " ";
+    }
+    cout << "\n";
+    cout << "  - Joints (deg): ";
+    for (int i = 0; i < config.num_links; i += 1){
+        cout << config.angles[i] << " ";
     }
     cout << "\n";
     cout << "--------------------------------\n";
@@ -67,6 +73,7 @@ int main()
         }
 
         if (commands[0] == "help"){
+            print_robot_config(manipulator.get_config());
             print_available_commands();            
         }
         
@@ -77,13 +84,13 @@ int main()
         }
 
         // Change robot parameters
-        else if (commands[0] == "parameters"){
+        else if (commands[0] == "links"){
 
             if (commands.size() < MAX_LINKS && commands.size() > 1){
-                int n_links = atof(commands[1].c_str());
+                int n_links = commands.size() - 1;
                 double links[n_links];
-                for (int i = 0; i < commands.size() - 1; i += 1){
-                    links[i] = atof(commands[i + 1].c_str());
+                for (int i = 1; i < commands.size(); i += 1){
+                    links[i - 1] = atof(commands[i].c_str());
                 }
                 manipulator.set_parameters(n_links, links);
                 print_robot_config(manipulator.get_config());
@@ -165,8 +172,21 @@ int main()
         }
 
         // Inverse dynamics
-        else if (commands[0] == "inverse_dynamics"){
-            // manipulator.inverse_dynamics();         
+        else if (commands[0] == "inverse_d"){
+            if (commands.size() == 4 && manipulator.get_config().num_links == 3){
+                double fx = atof(commands[1].c_str());
+                double fy = atof(commands[2].c_str());
+                double tau = atof(commands[3].c_str());
+                double torques[MAX_LINKS];
+                if (manipulator.inverse_dynamics(fx, fy, tau, torques)){
+                    cout << "Torques: " << torques[0] << ", " << torques[1] 
+                        << ", " << torques[2] << endl;
+                }
+                
+            }
+            else{
+                cout << "Invalid arguments or number of links.\n";
+            }          
         }
 
         // Exit program

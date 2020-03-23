@@ -56,9 +56,7 @@ TEST_CASE( "Manipulator Robot Tests" ) {
     }
 
     SECTION( "Intersection" ) {
-        double x;
-        double y;
-        double r;
+        double x, y, r;
         double angles[MAX_LINKS];
 
         x = 3.0;
@@ -72,9 +70,9 @@ TEST_CASE( "Manipulator Robot Tests" ) {
         x = 1.0;
         y = 1.0;
         r = 0.3;
-        angles[0] = 30.0;
-        angles[1] = 30.0;
-        angles[2] = 30.0;
+        angles[0] = 0.0;
+        angles[1] = 0.0;
+        angles[2] = 0.0;
         REQUIRE( !manipulator.intersection(x, y, r, angles) );
 
         x = -2.4;
@@ -87,9 +85,7 @@ TEST_CASE( "Manipulator Robot Tests" ) {
     }
 
     SECTION( "Inverse kinematics" ){
-        double x;
-        double y;
-        double theta;
+        double x, y, theta;
         double ang_1[3];
         double ang_2[3];
         double joints[3];
@@ -115,8 +111,44 @@ TEST_CASE( "Manipulator Robot Tests" ) {
         y = 0;
         theta = 0;
         REQUIRE( !manipulator.inverse_kinematics(x, y, theta, ang_1, ang_2) );
+    }
 
+    SECTION( "Inverse dynamics" ){
+        double fx, fy, tau;
+        double torques[3];
+        double joints[3];
 
+        fx = 0;
+        fy = 1;
+        tau = 0;
+        manipulator.inverse_dynamics(fx, fy, tau, torques);
+        REQUIRE( torques[0] == 3.0 );
+        REQUIRE( torques[1] == 2.0 );
+        REQUIRE( torques[2] == 1.0 );
+
+        joints[0] = 90.0;
+        joints[1] = 0.0;
+        joints[2] = 0.0;
+        fx = 1;
+        fy = 0;
+        tau = 0;
+        manipulator.forward_kinematics(joints);
+        manipulator.inverse_dynamics(fx, fy, tau, torques);
+        REQUIRE( torques[0] == -3.0 );
+        REQUIRE( torques[1] == -2.0 );
+        REQUIRE( torques[2] == -1.0 );
+
+        joints[0] = 30.0;
+        joints[1] = -30.0;
+        joints[2] = 30.0;
+        fx = 1;
+        fy = 1;
+        tau = 1;
+        manipulator.forward_kinematics(joints);
+        manipulator.inverse_dynamics(fx, fy, tau, torques);
+        REQUIRE( abs(torques[0] - 2.732) < 1e-3 );
+        REQUIRE( abs(torques[1] - 2.366) < 1e-3 );
+        REQUIRE( abs(torques[2] - 1.366) < 1e-3 );
     }
 
 }

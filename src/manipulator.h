@@ -33,6 +33,7 @@ class Manipulator{
 
 double clip_angle_180(double angle);
 bool point_in_circle(double x_center, double y_center, double radius, double x, double y);
+bool mult_matrices(int r1, int c1, int r2, int c2, double m1[3][3], double m2[3][3], double (&m3)[3][3]);
 
 #endif
 
