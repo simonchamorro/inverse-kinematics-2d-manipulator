@@ -9,15 +9,17 @@ To build main program and test program:
 
 ```bash
  cd inverse-kinematics-2d-manipulator/
+ mkdir build && cd build
+ cmake ..
  make
 ```
-This will create two executables: `bin/run` and `bin/test`.
+This will create two executables: `run-robot-manipulator` and `run-tests`.
 
 ### Testing
 
 To run tests:
 ```bash
-bin/test 
+build/run-tests 
 ```
 
 The framework used for testing is [Catch](https://github.com/catchorg/Catch2)
@@ -26,7 +28,7 @@ The framework used for testing is [Catch](https://github.com/catchorg/Catch2)
 
 To launch the main program:
 ```bash
-bin/run 
+build/run-robot-manipulator 
 ```
 
 This will create an instance of a Robot Manipulator and show this interface:

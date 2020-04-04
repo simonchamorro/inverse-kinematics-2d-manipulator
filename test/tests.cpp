@@ -9,8 +9,8 @@
 
 #include <stdlib.h>
 #include "catch.h"
-#include "../src/robot_configuration.h"
-#include "../src/manipulator.h"
+#include "robot_configuration.h"
+#include "manipulator.h"
 
 
 TEST_CASE( "Manipulator Robot Tests" ) {
